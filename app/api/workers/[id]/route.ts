@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { requireSelf } from "@/lib/auth";
 import { getWorkerById } from "@/lib/services/worker";
 import { toList } from "@/lib/contracts";
+import { getActiveTokenForWorker } from "@/lib/qr";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +20,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Worker not found." }, { status: 404 });
   }
 
+  // qrToken added by SC — reads across QrToken (SC's table), not a write.
+  const qrToken = await getActiveTokenForWorker(id);
+
   return NextResponse.json({
     id: worker.id,
     displayName: worker.displayName,
@@ -28,5 +32,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     structuredSkills: toList(worker.structuredSkills),
     structuredSummary: worker.structuredSummary,
     location: worker.location,
+    qrToken,
   });
 }
