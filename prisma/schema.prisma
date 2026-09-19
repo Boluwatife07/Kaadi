@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Worker {
+  id                String          @id @default(cuid())
+  displayName       String
+  phone             String          @unique
+  pinHash           String
+  photoUrl          String?
+  location          String?
+  languagesSpoken   String          @default("") // comma-separated
+  rawIntakeText     String?
+  intakeMode        String? // "voice" | "text"
+  structuredSkills  String          @default("") // comma-separated, approved only
+  structuredSummary String?
+  workflowStatus    String          @default("needs_structuring") // "needs_structuring"|"review"|"published"
+  createdAt         DateTime        @default(now())
+  profileDrafts     ProfileDraft[]
+  workHistory       WorkHistoryEntry[]
+  guarantors        Guarantor[]
+  qrTokens          QrToken[]
+}
+
+model ProfileDraft {
+  id                 String   @id @default(cuid())
+  workerId           String
+  sourceText         String
+  generatedName      String?
+  generatedSkills    String   @default("") // comma-separated
+  generatedLocation  String?
+  generatedLanguages String   @default("")
+  generatedHistory   String   @default("[]") // JSON: [{employerName,role,startDate,endDate,isOngoing,employerPhone}]
+  generatedGuarantor String? // JSON {name,phone,relationship} or null
+  missingInformation String   @default("[]") // JSON array of strings
+  fieldDecisions     String   @default("{}") // JSON: fieldName -> "accepted"|"edited"|"rejected"
+  approvalStatus     String   @default("draft") // "draft" | "approved"
+  isFallback         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  worker             Worker   @relation(fields: [workerId], references: [id])
+}
+
+model Guarantor {
+  id           String   @id @default(cuid())
+  workerId     String
+  name         String
+  phone        String
+  relationship String?
+  createdAt    DateTime @default(now())
+  worker       Worker   @relation(fields: [workerId], references: [id])
+}
+
+model Employer {
+  id          String             @id @default(cuid())
+  displayName String
+  phone       String
+  createdAt   DateTime           @default(now())
+  entries     WorkHistoryEntry[]
+}
+
+model WorkHistoryEntry {
+  id                 String    @id @default(cuid())
+  workerId           String
+  employerId         String? // set only when source = "employer_added"
+  employerName       String
+  employerPhone      String?
+  role               String
+  startDate          DateTime?
+  endDate            DateTime?
+  isOngoing          Boolean   @default(false)
+  source             String // "worker_declared" | "employer_added"
+  confirmationStatus String    @default("confirmed") // employer_added starts "pending"
+  createdAt          DateTime  @default(now())
+  worker             Worker    @relation(fields: [workerId], references: [id])
+  employer           Employer? @relation(fields: [employerId], references: [id])
+}
+
+model QrToken {
+  id        String   @id @default(cuid())
+  workerId  String
+  token     String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  worker    Worker   @relation(fields: [workerId], references: [id])
+}

@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --kaadi-ink-900: #211a16;
+  --kaadi-ink-700: #4a3f38;
+  --kaadi-ink-500: #7a6b62;
+  --kaadi-cream-50: #fbf7f2;
+  --kaadi-card: #ffffff;
+  --kaadi-border: #e8dcd1;
+  --kaadi-clay-700: #b5502f;
+  --kaadi-clay-600: #c96540;
+  --kaadi-clay-100: #f6e4da;
+  --kaadi-verified-700: #15803d;
+  --kaadi-verified-100: #dcfce7;
+  --kaadi-pending-700: #b45309;
+  --kaadi-pending-100: #fef3c7;
+  --kaadi-alert-800: #991b1b;
+  --kaadi-alert-100: #fee2e2;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-manrope), system-ui, sans-serif;
+  --text-sm: 15px;
+  --text-md: 18px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 30px;
+  --text-3xl: 38px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius: 12px;
+  --tap-min: 48px;
+}
+
+body {
+  background: var(--kaadi-cream-50);
+  color: var(--kaadi-ink-900);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: 1.55;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--kaadi-clay-100);
+}
