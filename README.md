@@ -26,7 +26,7 @@ happy path), `w-tunde` (needs_structuring), `w-bisi` (mid-review draft),
 `w-chidinma` (published, one pending + one declined entry, one deactivated
 QR token).
 
-## What's on `main` right now (Hour 0 contract pack + Sections A, B & C)
+## What's on `main` right now — all four sections built
 
 - Frozen: `prisma/schema.prisma`, `prisma/seed.ts`, `lib/contracts.ts`,
   `lib/db.ts`, `app/globals.css`, `components/ui/*`
@@ -47,11 +47,19 @@ QR token).
   (public profile JSON — confirmed history only, per Section 18's QA
   checklist), the public `/p/[token]` page (no dashboard shell, Section
   5.4), and `/my-code`.
+- Section D (Employer & Work History): `lib/services/workHistory.ts` (real
+  implementation — `Employer`/`WorkHistoryEntry` writes, the
+  confirm/decline integrity boundary, Section 11.2), `POST /api/employers`,
+  `POST /api/p/:token/add-employer` (zero-auth), `GET
+  /api/workers/:id/pending-entries`, `PATCH /api/entries/:id/confirm`,
+  `PATCH /api/entries/:id/decline`, the real `AddEmployerForm` on the
+  public page, and `/work-history` (pending confirmations + confirm/decline
+  controls).
 
-`/work-history` is linked from the dashboard nav but not yet built —
-belongs to SD. The public page's "Add myself as an employer" form is a
-stub (`components/AddEmployerForm.tsx`, `OWNER: SD`) — real version needs
-SD's `POST /api/employers` and `POST /api/p/:token/add-employer`.
+The full demo loop now works end to end: register → record/type an account
+→ AI structures it → review & approve → published → generate QR → scan
+public profile → "add myself as employer" (zero-auth) → lands pending in
+the worker's Work History tab → confirm → appears on the public profile.
 
 ### ⚠️ Set this before the live demo
 
@@ -61,16 +69,6 @@ SD's `POST /api/employers` and `POST /api/p/:token/add-employer`.
 `NEXT_PUBLIC_BASE_URL` in `.env` to wherever the app is actually reachable**
 (your LAN IP, e.g. `http://192.168.1.23:3000`, or a tunnel/deploy URL) —
 otherwise every QR code encodes an address nobody's phone can reach.
-
-### Stubs still waiting on their real owners
-
-- `lib/services/workHistory.ts` (`OWNER: SD`) — frozen signature per
-  Section 13.2, stub returns a fixed id and does **not** write a row yet.
-  Draft approval calls it, so worker-declared history entries won't
-  actually persist until SD replaces the body.
-- `components/AddEmployerForm.tsx` (`OWNER: SD`) — placeholder card on the
-  public profile page; SD replaces the whole file, no edit to the page
-  needed.
 
 ### Known gaps / things to revisit
 
@@ -84,8 +82,22 @@ otherwise every QR code encodes an address nobody's phone can reach.
   broadcast-to-everyone decision (Section 2.1).
 - **Editing "Work history" or "Guarantor" in the review screen is free
   text**, not a structured per-entry editor — `FieldReview` wasn't built
-  for nested data. Harmless right now since `createWorkerDeclaredEntry` is
-  still a stub, but SD should know before wiring the real write.
+  for nested data. Now that `createWorkerDeclaredEntry` actually persists,
+  an edited history/guarantor field on `/profile/review` would need to
+  round-trip through JSON correctly — right now only Accept/Reject are
+  safe for those two fields; avoid Edit on them until this gets a proper
+  per-entry UI.
+- **No screen lists a worker's own *confirmed* history** — Section 8.2's
+  endpoint table has no such route, and I didn't invent one (Section 2.1
+  hard prohibition #5). Right now the only way a worker sees their
+  confirmed entries is by viewing their own public profile via My Code.
+  If that's not enough for the demo, it's a new-endpoint decision to
+  broadcast, not something to quietly add.
+- **The seeded `e-musa`/`e-grace` `Employer` rows predate this section's
+  `findOrCreateEmployer`** (they were created directly in `seed.ts` before
+  Section D existed) — harmless, since lookup is by phone and the seeded
+  phones are already unique, but worth knowing if seed data ever looks
+  duplicated.
 
 ## Branches (Section 14)
 
