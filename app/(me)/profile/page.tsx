@@ -2,8 +2,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { VoiceRecorder } from "@/components/ui/VoiceRecorder";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -19,6 +22,7 @@ interface WorkerReadModel {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [worker, setWorker] = useState<WorkerReadModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +67,11 @@ export default function ProfilePage() {
         setSubmitError(data.error ?? "Couldn't submit your account right now.");
         return;
       }
-      await load();
+      const data = await res.json();
+      // SB's review screen — stashed client-side since ProfileDraft's frozen
+      // schema has no summary column (see README).
+      if (data.plainSummary) sessionStorage.setItem("kaadi:lastPlainSummary", data.plainSummary);
+      router.push("/profile/review");
     } catch {
       setSubmitError("Couldn't reach Kaadi. Your text hasn't been lost — try submitting again.");
     } finally {
@@ -112,10 +120,15 @@ export default function ProfilePage() {
 
       {worker.workflowStatus === "review" && (
         <Card>
-          <p>
+          <p className="mb-[var(--space-3)]">
             Your account has been turned into a draft profile. Head to the review screen to accept,
             edit, or reject each field before it goes live.
           </p>
+          <Link href="/profile/review">
+            <Button variant="primary" fullWidth>
+              Review your draft
+            </Button>
+          </Link>
         </Card>
       )}
 

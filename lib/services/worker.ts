@@ -30,6 +30,24 @@ export async function createWorker(input: {
   });
 }
 
+// Added for SB's intake flow (Section 8.2's POST /api/workers/:id/intake
+// is SB-owned but writes Worker.rawIntakeText/intakeMode/workflowStatus —
+// SA's table). Cross-write per Section 13.2: SB calls this instead of
+// touching db.worker directly.
+export async function recordIntake(
+  workerId: string,
+  input: { rawIntakeText: string; intakeMode: "voice" | "text" }
+): Promise<void> {
+  await db.worker.update({
+    where: { id: workerId },
+    data: {
+      rawIntakeText: input.rawIntakeText,
+      intakeMode: input.intakeMode,
+      workflowStatus: "review",
+    },
+  });
+}
+
 // Frozen signature — Section 13.2. SB calls this on draft approval to move
 // a worker from "review" to "published" and write the approved fields.
 export async function markWorkerPublished(
