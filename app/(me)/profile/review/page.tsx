@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { FieldReview, type FieldDecision } from "@/components/ui/FieldReview";
+import { HistoryFieldReview, type DraftHistoryItem } from "./HistoryFieldReview";
+import { GuarantorFieldReview, type DraftGuarantor } from "./GuarantorFieldReview";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -18,15 +20,8 @@ interface DraftReadModel {
   generatedSkills: string[];
   generatedLocation: string | null;
   generatedLanguages: string[];
-  generatedHistory: {
-    employerName: string;
-    role: string;
-    startDate: string | null;
-    endDate: string | null;
-    isOngoing: boolean;
-    employerPhone: string | null;
-  }[];
-  generatedGuarantor: { name: string; phone: string; relationship: string } | null;
+  generatedHistory: DraftHistoryItem[];
+  generatedGuarantor: DraftGuarantor | null;
   missingInformation: string[];
   fieldDecisions: Record<string, FieldDecision>;
   approvalStatus: "draft" | "approved";
@@ -38,26 +33,7 @@ const FIELD_LABELS: Record<string, string> = {
   generatedSkills: "Skills",
   generatedLocation: "Location",
   generatedLanguages: "Languages spoken",
-  generatedHistory: "Work history",
-  generatedGuarantor: "Guarantor",
 };
-
-function historyToText(history: DraftReadModel["generatedHistory"]): string {
-  if (history.length === 0) return "";
-  return history
-    .map(
-      (h) =>
-        `${h.role} at ${h.employerName}${h.employerPhone ? ` (${h.employerPhone})` : ""} — ${
-          h.startDate ?? "?"
-        } to ${h.isOngoing ? "present" : h.endDate ?? "?"}`
-    )
-    .join("\n");
-}
-
-function guarantorToText(g: DraftReadModel["generatedGuarantor"]): string {
-  if (!g) return "";
-  return `${g.name} — ${g.phone}${g.relationship ? ` (${g.relationship})` : ""}`;
-}
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -188,16 +164,14 @@ export default function ReviewPage() {
         decision={draft.fieldDecisions.generatedLanguages ?? "pending"}
         onDecide={(d, v) => decide("generatedLanguages", d, v)}
       />
-      <FieldReview
-        label={FIELD_LABELS.generatedHistory}
-        value={historyToText(draft.generatedHistory)}
+      <HistoryFieldReview
+        value={draft.generatedHistory}
         decision={draft.fieldDecisions.generatedHistory ?? "pending"}
         onDecide={(d, v) => decide("generatedHistory", d, v)}
       />
       {draft.generatedGuarantor && (
-        <FieldReview
-          label={FIELD_LABELS.generatedGuarantor}
-          value={guarantorToText(draft.generatedGuarantor)}
+        <GuarantorFieldReview
+          value={draft.generatedGuarantor}
           decision={draft.fieldDecisions.generatedGuarantor ?? "pending"}
           onDecide={(d, v) => decide("generatedGuarantor", d, v)}
         />

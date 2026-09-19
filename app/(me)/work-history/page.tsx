@@ -19,8 +19,20 @@ interface PendingEntry {
   confirmationStatus: "pending" | "declined";
 }
 
+interface ConfirmedEntry {
+  id: string;
+  employerName: string;
+  employerPhone: string | null;
+  role: string;
+  startDate: string | null;
+  endDate: string | null;
+  isOngoing: boolean;
+  source: "worker_declared" | "employer_added";
+}
+
 export default function WorkHistoryPage() {
   const [entries, setEntries] = useState<PendingEntry[]>([]);
+  const [confirmed, setConfirmed] = useState<ConfirmedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actingOn, setActingOn] = useState<string | null>(null);
@@ -33,9 +45,15 @@ export default function WorkHistoryPage() {
       if (!meRes.ok) throw new Error("session");
       const me = await meRes.json();
 
-      const res = await fetch(`/api/workers/${me.workerId}/pending-entries`);
-      if (!res.ok) throw new Error("entries");
-      setEntries(await res.json());
+      const [pendingRes, workerRes] = await Promise.all([
+        fetch(`/api/workers/${me.workerId}/pending-entries`),
+        fetch(`/api/workers/${me.workerId}`),
+      ]);
+      if (!pendingRes.ok || !workerRes.ok) throw new Error("entries");
+
+      setEntries(await pendingRes.json());
+      const worker = await workerRes.json();
+      setConfirmed(worker.confirmedWorkHistory ?? []);
     } catch {
       setError("Couldn't load your work history. Check your connection and try again.");
     } finally {
@@ -70,7 +88,7 @@ export default function WorkHistoryPage() {
       <div>
         <h2 className="mb-[var(--space-3)] font-medium">Pending confirmations</h2>
         {pending.length === 0 ? (
-          <EmptyState message="Nobody's asked to be added yet. Confirmed history from your published profile shows up on your public code, under My Code." />
+          <EmptyState message="Nobody's asked to be added yet." />
         ) : (
           <div className="space-y-[var(--space-3)]">
             {pending.map((entry) => (
@@ -127,6 +145,31 @@ export default function WorkHistoryPage() {
           </div>
         </div>
       )}
+
+      <div>
+        <h2 className="mb-[var(--space-3)] font-medium">Confirmed history</h2>
+        {confirmed.length === 0 ? (
+          <EmptyState message="Nothing confirmed yet — this is what shows on your public profile." />
+        ) : (
+          <div className="space-y-[var(--space-3)]">
+            {confirmed.map((entry) => (
+              <Card key={entry.id}>
+                <div className="mb-[var(--space-2)] flex items-center justify-between">
+                  <span className="font-medium">
+                    {entry.role} — {entry.employerName}
+                  </span>
+                  <StatusPill status="verified" />
+                </div>
+                <p className="mb-[var(--space-2)] text-[var(--text-sm)] text-[var(--kaadi-ink-500)]">
+                  {entry.startDate?.slice(0, 10) ?? "?"} –{" "}
+                  {entry.isOngoing ? "present" : entry.endDate?.slice(0, 10) ?? "?"}
+                </p>
+                {entry.employerPhone && <PhoneLink phone={entry.employerPhone} />}
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

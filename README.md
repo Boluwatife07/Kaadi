@@ -80,24 +80,24 @@ otherwise every QR code encodes an address nobody's phone can reach.
   from the reviewed name/skills/location, not the AI's original wording.
   If this matters for the demo, it needs a schema change, which is a
   broadcast-to-everyone decision (Section 2.1).
-- **Editing "Work history" or "Guarantor" in the review screen is free
-  text**, not a structured per-entry editor — `FieldReview` wasn't built
-  for nested data. Now that `createWorkerDeclaredEntry` actually persists,
-  an edited history/guarantor field on `/profile/review` would need to
-  round-trip through JSON correctly — right now only Accept/Reject are
-  safe for those two fields; avoid Edit on them until this gets a proper
-  per-entry UI.
-- **No screen lists a worker's own *confirmed* history** — Section 8.2's
-  endpoint table has no such route, and I didn't invent one (Section 2.1
-  hard prohibition #5). Right now the only way a worker sees their
-  confirmed entries is by viewing their own public profile via My Code.
-  If that's not enough for the demo, it's a new-endpoint decision to
-  broadcast, not something to quietly add.
 - **The seeded `e-musa`/`e-grace` `Employer` rows predate this section's
   `findOrCreateEmployer`** (they were created directly in `seed.ts` before
   Section D existed) — harmless, since lookup is by phone and the seeded
   phones are already unique, but worth knowing if seed data ever looks
   duplicated.
+
+### Fixed since the walkthrough above
+
+- **Work history / guarantor editing** is now a real structured editor
+  (`HistoryFieldReview.tsx`, `GuarantorFieldReview.tsx`, both `OWNER: SB`,
+  living next to `/profile/review`) instead of free text over a JSON
+  column — Accept/Edit/Reject all round-trip correctly now.
+- **A worker can now see their own confirmed history** — `GET
+  /api/workers/:id` (SA's file) gained a `confirmedWorkHistory` field
+  (reads across SD's `WorkHistoryEntry`, not a write), and `/work-history`
+  shows it below Pending/Declined. This is an enrichment of an existing
+  read endpoint, not a new route — Section 8.2's endpoint table is still
+  accurate as written.
 
 ## Branches (Section 14)
 
